@@ -1,6 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const ExtractCssChunksPlugin = require('extract-css-chunks-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const { VueLoaderPlugin } = require('vue-loader')
 
@@ -48,16 +48,17 @@ module.exports = {
       {
         test: /\.styl(us)?$/,
         use: isProd
-          ? ExtractTextPlugin.extract({
-              use: [
-                {
-                  loader: 'css-loader',
-                  options: { minimize: true }
+          ? [
+              {
+                loader: ExtractCssChunksPlugin.loader,
+                options: {
+                  hot: !isProd,
+                  reloadAll: !isProd,
                 },
-                'stylus-loader'
-              ],
-              fallback: 'vue-style-loader'
-            })
+              },
+              'css-loader',
+              'stylus-loader',
+            ]
           : ['vue-style-loader', 'css-loader', 'stylus-loader']
       },
     ]
@@ -68,12 +69,10 @@ module.exports = {
   plugins: isProd
     ? [
         new VueLoaderPlugin(),
-        new webpack.optimize.UglifyJsPlugin({
-          compress: { warnings: false }
-        }),
         new webpack.optimize.ModuleConcatenationPlugin(),
-        new ExtractTextPlugin({
-          filename: 'common.[chunkhash].css'
+        new ExtractCssChunksPlugin({
+          filename: 'common.[chunkhash].css',
+          ignoreOrder: true,
         })
       ]
     : [
